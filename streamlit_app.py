@@ -6,6 +6,8 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder # Needed to inverse transform predictions
 import random
 from numpy.random import default_rng as rng
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 #######################################
 # PAGE SETUP
@@ -16,29 +18,73 @@ st.set_page_config(page_title="Sales Dashboard", page_icon=":bar_chart:", layout
 with open('style2.css') as f:
    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-#st.title("Gestão do Projeto XYZ")
+# st.title("Gestão do Projeto XYZ")
 
 #######################################
 # STREAMLIT LAYOUT
 #######################################
 
 Titlebar, = st.columns(1)
-Line1L,Line1R = st.columns(2)
+Line1L,Line1R = st.columns([0.7,0.3])
 Line2L,Line2R = st.columns(2)
-top_left_column, top_right_column = st.columns([0.8,0.2])
+top_left_column, top_right_column = st.columns([0.7,0.3])
 bottom_left_column, bottom_right_column = st.columns(2)
 
 with Titlebar:
     # อินเทอร์เฟซผู้ใช้
-    st.title("Diabetes Risk Predictor")
-    st.write("ใส่ข้อมูลสุขภาพของคุณ เพื่อประเมินความเสี่ยงโรคเบาหวาน (DM)")
+    st.markdown("<h1 style='text-align: center;'>การพยากรณ์ภาวะเสี่ยงโรคไม่ติดต่อเรื้อรังในผู้สูงอายุโดยใช้เทคนิคเหมืองข้อมูล เพื่อสนับสนุนพฤติกรรมสุขภาพที่เหมาะสม</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>This is some centered paragraph text.</p>", unsafe_allow_html=True)
 
 with Line1L:
     st.subheader("Home")
     st.write("Health Risk Predictor \n This application predicts health risk scores based \n on user-entered information.")
 
+    st.title("Summary Report: Simulated Diabetes Data")
+    st.write("ข้อมูลนี้เป็นข้อมูลจำลองที่มีการกระจายของระดับน้ำตาลในเลือด 3 กลุ่ม ได้แก่ ปกติ, เสี่ยง, และสงสัยป่วย")
+
+    # Upload or load the data
+    @st.cache_data
+    def load_data():
+        return pd.read_csv("Diabetes_Risk_Data.csv")
+
+    df = load_data()
+
+    st.subheader("🔍 ตัวอย่างข้อมูล")
+    st.dataframe(df.head(10))
+
+    # Basic stats
+    st.subheader("📈 สถิติเชิงพรรณนา (Descriptive Statistics)")
+    st.write(df.describe())
+
+    # Correlation heatmap
+    st.subheader("📌 ความสัมพันธ์ระหว่างตัวแปร (Correlation Matrix)")
+    numeric_cols = df.select_dtypes(include=['float64', 'int64'])
+    corr = numeric_cols.corr()
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+    st.pyplot(fig)
+
+    # Distribution plots
+    st.subheader("📊 Distribution ของตัวแปรสำคัญ")
+    col_to_plot = st.selectbox("เลือกตัวแปร:", numeric_cols.columns)
+    fig2, ax2 = plt.subplots()
+    sns.histplot(df[col_to_plot], kde=True, bins=30, ax=ax2)
+    st.pyplot(fig2)
+
+    # DM Status vs selected feature
+    st.subheader("📌 การเปรียบเทียบระดับน้ำตาลกับตัวแปรอื่น")
+    compare_feature = st.selectbox("เลือกตัวแปรเพื่อเปรียบเทียบกับระดับน้ำตาล (DM_Status):", numeric_cols.columns)
+    fig3, ax3 = plt.subplots()
+    sns.boxplot(x='DM', y=compare_feature, data=df, ax=ax3)
+    st.pyplot(fig3)
+
+    # Footer
+    st.info("💡 หากต้องการนำข้อมูลไปสร้างโมเดล Machine Learning หรือฝึกโมเดล XGBoost สามารถนำข้อมูลชุดนี้ไปใช้ได้เลย")
+
+
     st.progress(50, text="Progresso")
-    
+
     column_1, column_2, column_3, column_4 = st.columns(4)
 
     with column_1:
@@ -48,7 +94,7 @@ with Line1L:
         st.metric(label="Temperature", value="70 °F", delta="1.2 °F")
 
     with column_3:
-        st.metric(label="Temperature", value="70 °F", delta="1.2 °F")
+        st.metric(label="Temperature", value="70 °F", delta="-1.2 °F")
         
     with column_4:
         st.metric(label="Encerramento", value="40")
